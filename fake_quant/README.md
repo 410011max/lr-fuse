@@ -34,5 +34,7 @@ Currently, we only support **LLaMa-2** models. You can simply run the `main.py` 
 For example, to run the perplexity of `LLaMA2-7B` model with quantizing all weights and activations, you can run the following command:
 
 ```bash
-/bin/python main.py --model meta-llama/Llama-2-7b-hf  --rotate --a_bits 4 --v_bits 4 --k_bits 4 --w_bits 4 --w_clip
+CUDA_VISIBLE_DEVICES=0 python main.py \
+--model meta-llama/Llama-2-7b-hf \
+--rotate --a_bits 4 --v_bits 4 --k_bits 4 --w_bits 4 --w_clip --w_rtn
 ```
