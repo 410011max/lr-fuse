@@ -75,8 +75,9 @@ def parser_gen():
     parser.add_argument('--model', type=str, default='meta-llama/Llama-2-7b-hf',
                         help='Model to load;', choices=supported_models)
     parser.add_argument('--seed', type=int, default=0, help='Random Seed for HuggingFace and PyTorch')
+    parser.add_argument('--eval_ppl', action='store_true', help='Evaluate the model on PPL tasks.')
     parser.add_argument('--eval_dataset', type=str, default='wikitext2',
-                        help='Dataset for Evaluation (default: wikitext2)', choices=supported_datasets,)
+                        help='Dataset for Evaluation (default: wikitext2)', choices=supported_datasets)
     parser.add_argument('--hf_token', type=str, default=None)
     parser.add_argument('--bsz', type=int, default=32,
                         help='Batch-size for PPL evaluation (default:32)')
@@ -172,6 +173,8 @@ def parser_gen():
     parser.add_argument('--capture_layer_io', action=argparse.BooleanOptionalAction, default=False,
                         help='Capture the input and output of the specified decoder layer and dump into a file')
     parser.add_argument('--layer_idx', type=int, default=10, help='Which decoder layer to capture')
+
+
 
     # LM Eval Arguments
     parser.add_argument("--lm_eval", action="store_true", help="Evaluate the model on LM Eval tasks.")

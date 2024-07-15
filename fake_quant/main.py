@@ -74,7 +74,6 @@ def main():
             save_dict["model"] = model.state_dict()
             torch.save(save_dict, args.save_qmodel_path)
 
-
     # Add Input Quantization
     if args.a_bits < 16 or args.v_bits < 16:
         qlayers = quant_utils.find_qlayers(model, layers=[quant_utils.ActQuantWrapper])
@@ -122,21 +121,23 @@ def main():
                             rope_function_name, 
                             config=model.config,
                             **k_quant_config)
-        
-    # Evaluating on dataset
-    testloader = data_utils.get_loaders(
-            args.eval_dataset,
-            seed=args.seed,
-            model=args.model,
-            seqlen=model.seqlen,
-            hf_token=args.hf_token,
-            eval_mode=True
-        )
-
     
-    dataset_ppl = eval_utils.evaluator(model, testloader, utils.DEV, args)
-    if args.wandb:
-            wandb.log({'ppl/{}'.format(args.eval_dataset.upper()): dataset_ppl})
+    if args.eval_ppl:
+        # Evaluating on dataset
+        testloader = data_utils.get_loaders(
+                args.eval_dataset,
+                seed=args.seed,
+                model=args.model,
+                seqlen=model.seqlen,
+                hf_token=args.hf_token,
+                eval_mode=True
+            )
+        
+        dataset_ppl = eval_utils.evaluator(model, testloader, utils.DEV, args)
+
+        if args.wandb:
+                wandb.log({'ppl/{}'.format(args.eval_dataset.upper()): dataset_ppl})
+
 
     if not args.lm_eval:
         return
@@ -148,7 +149,6 @@ def main():
         from lm_eval.models.huggingface import HFLM
 
         
-    
     if args.distribute_model:
         utils.distribute_model(model)
     else:
