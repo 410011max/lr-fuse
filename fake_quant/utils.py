@@ -82,6 +82,9 @@ def parser_gen():
     parser.add_argument('--bsz', type=int, default=32,
                         help='Batch-size for PPL evaluation (default:32)')
 
+    # Low-Rank Fusing Arguments
+    parser.add_argument('--lr_fuse', action=argparse.BooleanOptionalAction, default=False,
+                        help='Low-Rank decompose and fuse the model')
 
     # Rotation Arguments
     parser.add_argument('--rotate', action=argparse.BooleanOptionalAction, default=False, 

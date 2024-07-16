@@ -8,6 +8,7 @@ import rotation_utils
 import gptq_utils
 import eval_utils
 import hadamard_utils
+import svd_utils
 
 def main():
     args = utils.parser_gen()
@@ -20,14 +21,20 @@ def main():
     model = model_utils.get_model(args.model, args.hf_token)
     model.eval()
     
-    
+    # SVD and Fuse the model
+    if args.lr_fuse:
+        rotation_utils.fuse_layer_norms(model)
+        svd_utils.decompose_and_fuse_model(model, args)
+        print(model)
+
+
     # Rotate the weights
     if args.rotate:
         rotation_utils.fuse_layer_norms(model)
         rotation_utils.rotate_model(model, args)
         utils.cleanup_memory(verbos=True)
             
-        quant_utils.add_actquant(model) #Add Activation Wrapper to the model
+        quant_utils.add_actquant(model) # Add Activation Wrapper to the model
         qlayers = quant_utils.find_qlayers(model)
         for name in qlayers:
             if 'down_proj' in name:
@@ -44,7 +51,7 @@ def main():
                 qlayers[name].had_dim = model.config.hidden_size//model.config.num_attention_heads
                 qlayers[name].fp32_had = args.fp32_had
     else:
-        quant_utils.add_actquant(model) #Add Activation Wrapper to the model as the rest of the code assumes it is present
+        quant_utils.add_actquant(model) # Add Activation Wrapper to the model as the rest of the code assumes it is present
         
                 
     if args.w_bits < 16:
