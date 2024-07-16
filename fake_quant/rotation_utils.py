@@ -40,8 +40,6 @@ def bake_mean_into_linear(linear: torch.nn.Linear) -> None:
         linear.bias.data = b_ - b_.mean()
         linear.bias.data = linear.bias.data.to(linear_dtype)
 
-         
-            
 def fuse_layer_norms(model):
     
     model_type = model_utils.get_model_type(model)
@@ -68,13 +66,11 @@ def fuse_layer_norms(model):
         else:
             raise ValueError(f'Unknown model type {model_type}')
             
-            
-    
+
         if model_type == model_utils.OPT_MODEL:
             bake_mean_into_linear(layer.self_attn.out_proj)
             bake_mean_into_linear(layer.fc2)
                     
-    
     fuse_ln_linear(model_utils.get_pre_head_layernorm(**kwargs), [model_utils.get_lm_head(**kwargs)])
     
     model_utils.replace_modules(
@@ -84,7 +80,6 @@ def fuse_layer_norms(model):
         replace_layers=False,
     )
     
-
 def random_orthogonal_matrix(size, device):
     """
     Generate a random orthogonal matrix of the specified size.
@@ -112,8 +107,6 @@ def get_orthogonal_matrix(size, mode, device=utils.DEV):
     else:
         raise ValueError(f'Unknown mode {mode}')
 
-    
-
 def rotate_embeddings(model, Q: torch.Tensor) -> None:
     # Rotate the embeddings.
     model_type = model_utils.model_type_extractor(model)
@@ -122,7 +115,6 @@ def rotate_embeddings(model, Q: torch.Tensor) -> None:
         W_ = W.weight.data.to(device=utils.DEV, dtype=torch.float64)
         W.weight.data = torch.matmul(W_, Q).to(device="cpu", dtype=dtype)
 
-    
 def rotate_attention_inputs(layer, Q, model_type) -> None:
     # Rotate the WQ, WK and WV matrices of the self-attention layer.
     for W in [layer.self_attn.q_proj, layer.self_attn.k_proj, layer.self_attn.v_proj]:
@@ -199,12 +191,11 @@ def rotate_faster_down_proj(layer, model_type, hardK):
     if model_type == model_utils.LLAMA_MODEL:
         W = layer.mlp.down_proj
     else:
-        raise ValueError(f'Faster MLP is onlu supported for LLaMa models!')
+        raise ValueError(f'Faster MLP is only supported for LLaMa models!')
     
     dtype = W.weight.data.dtype
     W.weight.data = matmul_hadU_cuda_had(W.weight.data.float().cuda(), hardK)
     W.weight.data = W.weight.data.to(device="cpu", dtype=dtype)
-
 
 def rotate_head(model, Q: torch.Tensor) -> None:
     # Rotate the head.
@@ -224,7 +215,6 @@ def rotate_ov_proj(layer, model_type, head_num, head_dim):
     
     apply_exact_had_to_linear(v_proj, had_dim=head_dim, output=True)
     apply_exact_had_to_linear(o_proj, had_dim=-1, output=False)
-
 
 @torch.inference_mode()
 def rotate_model(model, args):
@@ -249,7 +239,6 @@ def rotate_model(model, args):
         rotate_mlp_output(layers[idx], Q, model_type)
         rotate_ov_proj(layers[idx], model_type, num_heads, head_dim)
 
-
 @torch.inference_mode
 def online_rotate(module, inp):
     x = torch.nn.functional.linear(inp[0], module.Q)
@@ -262,7 +251,6 @@ def register_online_rotation(module, Q:torch.Tensor):
     # We use forward_pre_hook because we capture the input using forward_hook, which could then capture the rotated input.
     # If we implement in the forward() the un-rotated original input will be captured.
     module.rotate_handle = module.register_forward_pre_hook(online_rotate)
-
 
 class QKRotationWrapper(torch.nn.Module):
 
@@ -305,8 +293,6 @@ class QKRotationWrapper(torch.nn.Module):
         self.k_quantizer.free()
             
         return q, k
-
-
 
 def add_qk_rotation_wrapper_after_function_call_in_forward(module, function_name, *args, **kwargs):
     '''

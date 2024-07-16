@@ -28,14 +28,12 @@ def get_rope_function_name(model):
         return "apply_rotary_pos_emb"
     raise NotImplementedError
 
-
 def get_layers(model):
     if isinstance(model, OPT_MODEL):
         return model.model.decoder.layers
     if isinstance(model, LLAMA_MODEL):
         return model.model.layers
     raise NotImplementedError
-
 
 def get_llama(model_name, hf_token):
     torch.nn.init.kaiming_uniform_ = skip
@@ -48,8 +46,6 @@ def get_llama(model_name, hf_token):
     logging.info('---> Loading {} Model with seq_len: {}'.format(model_name, model.seqlen))
     return model
 
-
-
 def get_opt(model_name):
     torch.nn.init.kaiming_uniform_ = skip
     torch.nn.init.uniform_ = skip
@@ -60,7 +56,6 @@ def get_opt(model_name):
     logging.info('---> Loading {} Model with seq_len: {}'.format(model_name, model.seqlen))
     return model
 
-
 def get_model(
     model_name, hf_token=None
 ):
@@ -70,7 +65,6 @@ def get_model(
         return get_opt(model_name)
     else:
         raise ValueError(f'Unknown model {model_name}')
-
 
 def get_model_type(model):
     if isinstance(model, OPT_MODEL):
@@ -89,7 +83,6 @@ def get_embeddings(model, model_type) -> list[torch.nn.Module]:
     else:
         raise ValueError(f'Unknown model type {model_type}')
 
-
 def get_transformer_layers(model, model_type):
     if model_type == LLAMA_MODEL:
         return [layer for layer in model.model.layers]
@@ -97,7 +90,6 @@ def get_transformer_layers(model, model_type):
         return [layer for layer in model.model.decoder.layers]
     else:
         raise ValueError(f'Unknown model type {model_type}')
-
 
 def get_lm_head(model, model_type):
     if model_type == LLAMA_MODEL:
@@ -159,7 +151,6 @@ def replace_modules(
         if new_module is not None:
             setattr(root, name, new_module)
 
-
 class RMSN(torch.nn.Module):
     """
     This class implements the Root Mean Square Normalization (RMSN) layer.
@@ -180,7 +171,6 @@ class RMSN(torch.nn.Module):
         variance = x.pow(2).sum(-1, keepdim=True) / self.mean_dim
         x = x * torch.rsqrt(variance + self.eps)
         return x.to(input_dtype)
-
 
 def get_layer_io_save_path(args):
     return os.path.join(args.save_path, 'layer_io', f'{args.layer_idx:03d}.pt')
