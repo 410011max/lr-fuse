@@ -5,4 +5,10 @@ CUDA_VISIBLE_DEVICES=0 python main.py \
 
 CUDA_VISIBLE_DEVICES=0 python main.py \
 --model meta-llama/Llama-2-7b-hf \
---rotate
+--rotate --eval_ppl
+
+
+CUDA_VISIBLE_DEVICES=0 python main.py \
+--model meta-llama/Llama-2-7b-hf \
+--lr_fuse --eval_ppl
+
