@@ -102,6 +102,7 @@ def decompose_and_fuse_model(model, args):
     else:
         raise ValueError(f'Not supported model type {model_type}')
     
+    # FIXME: check it (repalce decoder layer)
     model_utils.replace_modules(
         model,
         target_module,

@@ -6,6 +6,7 @@ from transformers.models.llama.modeling_llama import *
 class LRFusedLlamaDecoderLayer(LlamaDecoderLayer):
     def __init__(self, config: LlamaConfig, layer_idx: int):
         super().__init__(config, layer_idx)
+        # FIXME: change it into identity layer
         self.o_proj_UT = None
         self.down_proj_UT = None
 
@@ -38,6 +39,7 @@ class LRFusedLlamaDecoderLayer(LlamaDecoderLayer):
                 "Passing `padding_mask` is deprecated and will be removed in v4.37. Please make sure use `attention_mask` instead.`"
             )
 
+        # FIXME: check it
         if self.o_proj_UT is not None:
             residual = self.o_proj_UT(hidden_states)
         else:
@@ -57,6 +59,7 @@ class LRFusedLlamaDecoderLayer(LlamaDecoderLayer):
         )
         hidden_states = residual + hidden_states
 
+        # FIXME: check it
         if self.down_proj_UT is not None:
             residual = self.down_proj_UT(hidden_states)
         else:
@@ -81,5 +84,6 @@ class LRFusedLlamaDecoderLayer(LlamaDecoderLayer):
     def from_llama_decoder_layer(llama_decoder_layer: LlamaDecoderLayer, config: LlamaConfig):
         new_llama_decoder_layer = LRFusedLlamaDecoderLayer(config, llama_decoder_layer.self_attn.layer_idx)
         new_llama_decoder_layer.load_state_dict(llama_decoder_layer.state_dict(), strict=False)
+        # FIXME: Keep model in FP16
 
         return new_llama_decoder_layer
