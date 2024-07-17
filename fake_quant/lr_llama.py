@@ -1,17 +1,13 @@
+import torch
 from transformers.models.llama.modeling_llama import *
 
 
 
-class LRLlamaDecoderLayer(LlamaDecoderLayer):
+class LRFusedLlamaDecoderLayer(LlamaDecoderLayer):
     def __init__(self, config: LlamaConfig, layer_idx: int):
-        super().__init__()
-        self.hidden_size = config.hidden_size
-
-        self.self_attn = LLAMA_ATTENTION_CLASSES[config._attn_implementation](config=config, layer_idx=layer_idx)
-
-        self.mlp = LlamaMLP(config)
-        self.input_layernorm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
-        self.post_attention_layernorm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+        super().__init__(config, layer_idx)
+        self.o_proj_UT = None
+        self.down_proj_UT = None
 
     def forward(
         self,
@@ -42,7 +38,10 @@ class LRLlamaDecoderLayer(LlamaDecoderLayer):
                 "Passing `padding_mask` is deprecated and will be removed in v4.37. Please make sure use `attention_mask` instead.`"
             )
 
-        residual = hidden_states
+        if self.o_proj_UT is not None:
+            residual = self.o_proj_UT(hidden_states)
+        else:
+            residual = hidden_states
 
         hidden_states = self.input_layernorm(hidden_states)
 
@@ -58,8 +57,12 @@ class LRLlamaDecoderLayer(LlamaDecoderLayer):
         )
         hidden_states = residual + hidden_states
 
+        if self.down_proj_UT is not None:
+            residual = self.down_proj_UT(hidden_states)
+        else:
+            residual = hidden_states
+        
         # Fully Connected
-        residual = hidden_states
         hidden_states = self.post_attention_layernorm(hidden_states)
         hidden_states = self.mlp(hidden_states)
         hidden_states = residual + hidden_states
@@ -75,7 +78,8 @@ class LRLlamaDecoderLayer(LlamaDecoderLayer):
         return outputs
 
     @staticmethod
-    def from_llama_decoder_layer(llama_decoder_layer: LlamaDecoderLayer):
-        llama_decoder_layer = LRLlamaDecoderLayer(llama_decoder_layer.config)
-        llama_decoder_layer.load_state_dict(llama_decoder_layer.state_dict())
-        return llama_decoder_layer
+    def from_llama_decoder_layer(llama_decoder_layer: LlamaDecoderLayer, config: LlamaConfig):
+        new_llama_decoder_layer = LRFusedLlamaDecoderLayer(config, llama_decoder_layer.self_attn.layer_idx)
+        new_llama_decoder_layer.load_state_dict(llama_decoder_layer.state_dict(), strict=False)
+
+        return new_llama_decoder_layer
