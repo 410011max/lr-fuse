@@ -25,7 +25,10 @@ def main():
     if args.lr_fuse:
         rotation_utils.fuse_layer_norms(model)
         svd_utils.decompose_and_fuse_model(model, args)
-        print(model)
+        # print(model)
+        # print(model.model.layers[0])
+        # print(model.model.layers[0].o_proj_UT)
+        model.to(dtype=torch.float16)
 
 
     # Rotate the weights
