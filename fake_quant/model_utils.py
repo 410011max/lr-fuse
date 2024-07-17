@@ -162,7 +162,7 @@ class RMSN(torch.nn.Module):
         super().__init__()
         self.eps = eps
         self.mean_dim = mean_dim
-        self.weight = torch.nn.Parameter(torch.zeros(1))
+        # self.weight = torch.nn.Parameter(torch.zeros(1))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         input_dtype = x.dtype
